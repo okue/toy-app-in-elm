@@ -23,6 +23,7 @@ import Bootstrap.Button as Button
 import Bootstrap.ListGroup as Listgroup
 import Bootstrap.Modal as Modal
 import Bootstrap.CDN as CDN
+import Bootstrap.Text as Text
 import Bootstrap.Utilities.Spacing as Spacing
 import Bootstrap.Utilities.Border as Border
 
@@ -251,15 +252,36 @@ mainContent model =
 
 footContent : Model -> Html Msg
 footContent model =
+    let
+        mkhref to = href <| model.root.path ++ to
+    in
     footer
         [ class "footer font-small" ]
-        [ Grid.row []
-            [ Grid.col []
-                [ a [ href <| model.root.path ++ "#faq" ] [ text "このページについて" ] ]
-            , Grid.col []
-                [ a [ href <| model.root.path ++ "#inquiry" ] [ text "お問い合わせ" ] ]
-            , Grid.col []
-                [ a [ href <| model.root.path ++ "#policy" ] [ text "サイトポリシー" ] ]
+        [ Grid.row
+            []
+            [ Grid.col
+                [ Col.textAlign Text.alignXsRight ]
+                [ a
+                    [ mkhref "#faq"
+                    , style "font-size" "x-small"
+                    , Spacing.ml2
+                    ]
+                    [ text "このページについて" ]
+                ]
+            , Grid.col
+                [ Col.textAlign Text.alignXsCenter ]
+                [ a
+                    [ mkhref "#inquiry"
+                    , style "font-size" "x-small" ]
+                    [ text "お問い合わせ" ]
+                ]
+            , Grid.col
+                [ Col.textAlign Text.alignXsLeft ]
+                [ a
+                    [ mkhref "#policy"
+                    , style "font-size" "x-small" ]
+                    [ text "サイトポリシー" ]
+                ]
             ]
         , div
             [ class "text-center py-3" ]
