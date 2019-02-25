@@ -26,6 +26,7 @@ import Bootstrap.CDN as CDN
 import Bootstrap.Text as Text
 import Bootstrap.Utilities.Spacing as Spacing
 import Bootstrap.Utilities.Border as Border
+import Bootstrap.Utilities.Flex as Flex
 
 
 -------------------------------------------------------------------------------
@@ -306,7 +307,7 @@ pageSearch model =
             let
                 (xs, numAllRecords) = getRecords c n model.pageUnit
             in
-                [ h1 [] [ text "Top page of SamiDare" ] ]
+                [ h3 [] [ text "Top page of SamiDare" ] ]
                 ++ genSearchItems model xs
                 ++ [ mkPagination c n model.pageUnit numAllRecords ]
 
@@ -432,7 +433,11 @@ mkPagination category curPage unit numAll =
     let
         seed = mkPageNumSeed curPage <| numOfPages unit numAll
     in
-        ul [ class "pagination", Spacing.mt2, Spacing.mlAuto ]
+        ul
+            [ class "pagination"
+            , Flex.justifyCenter
+            , Spacing.mt2
+            , Spacing.mlAuto ]
         <| List.map (mkPagerItem category curPage) seed
 
 

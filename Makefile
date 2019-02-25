@@ -11,6 +11,9 @@ compile:
 reactor:
 	elm reactor
 
+run:
+	python3 -m http.server
+
 compress:
 	${COMPRESS} ${JS} | ${MANGLE} --output=${JSMIN}
 	@echo "Initial size: `cat ${JS} | wc -c` bytes  ${JS}"
