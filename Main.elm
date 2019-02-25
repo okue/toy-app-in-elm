@@ -24,6 +24,7 @@ import Bootstrap.ListGroup as Listgroup
 import Bootstrap.Modal as Modal
 import Bootstrap.CDN as CDN
 import Bootstrap.Utilities.Spacing as Spacing
+import Bootstrap.Utilities.Border as Border
 
 
 -------------------------------------------------------------------------------
@@ -51,6 +52,9 @@ type alias Category = Int
 type Page
     = Search (Maybe Category) (Maybe Int)
     | Movie (Maybe Int)
+    | Policy
+    | Inquiry
+    | FAQ
     | NotFound
 
 
@@ -113,12 +117,13 @@ init flags url key =
 --- XXX: We should remove CDN.stylesheet when building for production
 view : Model -> Browser.Document Msg
 view model =
-    { title = "My Page"
+    { title = "SamiDare"
     , body =
         [ div []
             [ CDN.stylesheet
             , menu model
             , mainContent model
+            , footContent model
             , modal model
             ]
         ]
@@ -186,8 +191,12 @@ urlUpdate url model =
 
 routeParser : Parser (Page -> a) a
 routeParser =
+    -- XXX:
     UrlParser.oneOf
-        [ UrlParser.map Search (top <?> Query.int categoryQ <?> Query.int pageNumQ)
+        [ UrlParser.map Inquiry (top </> s "inquiry")
+        , UrlParser.map FAQ (top </> s "faq")
+        , UrlParser.map Policy (top </> s "policy")
+        , UrlParser.map Search (top <?> Query.int categoryQ <?> Query.int pageNumQ)
         , UrlParser.map Movie (s "movie" <?> Query.int "id")
         ]
 
@@ -207,7 +216,7 @@ menu model =
     Navbar.config NavMsg
         |> Navbar.withAnimation
         |> Navbar.info
-        |> Navbar.brand [ href <| model.root.path ] [ text "My Page" ]
+        |> Navbar.brand [ href <| model.root.path ] [ text "SamiDare" ]
         |> Navbar.items
             [ Navbar.itemLink [ href "http://elm-bootstrap.info/alert" ] [ text "Bootstrap ex" ]
             , Navbar.itemLink [ href "https://package.elm-lang.org/packages/rundis/elm-bootstrap/5.1.0" ]
@@ -227,8 +236,36 @@ mainContent model =
             Movie (Just movieId) ->
                 pageMovie movieId model
 
+            FAQ ->
+                List.singleton <| text "F and Q"
+
+            Inquiry ->
+                List.singleton <| text "お問い合わせ"
+
+            Policy ->
+                List.singleton <| text "Site policy"
+
             _ ->
                 pageNotFound
+
+
+footContent : Model -> Html Msg
+footContent model =
+    footer
+        [ class "font-small" ]
+        [ Grid.row []
+            [ Grid.col []
+                [ a [ href <| model.root.path ++ "#faq" ] [ text "このページについて" ] ]
+            , Grid.col []
+                [ a [ href <| model.root.path ++ "#inquiry" ] [ text "お問い合わせ" ] ]
+            , Grid.col []
+                [ a [ href <| model.root.path ++ "#policy" ] [ text "サイトポリシー" ] ]
+            ]
+        , div
+            [ class "text-center py-3" ]
+            [ p [] [ text "(c) 2019- SamiDare" ] ]
+        ]
+
 
 --
 -- Page views
@@ -247,7 +284,7 @@ pageSearch model =
             let
                 (xs, numAllRecords) = getRecords c n model.pageUnit
             in
-                [ h1 [] [ text "Home" ] ]
+                [ h1 [] [ text "Top page of SamiDare" ] ]
                 ++ genSearchItems model xs
                 ++ [ mkPagination c n model.pageUnit numAllRecords ]
 
@@ -291,9 +328,6 @@ genSearchItems model records =
 genSearchItem : Model -> MovieRecord -> Html Msg
 genSearchItem model rec =
     let
-        moviePageRef =
-            mkMoviePageRef model rec.movieId
-
         imgArea =
             img
                 [ src rec.imgLink
@@ -303,32 +337,21 @@ genSearchItem model rec =
                 []
 
         titleArea =
-            a [ onClick <| ClickedMovie rec ] [ text rec.movieTitle ]
+            div [ onClick <| ClickedMovie rec ] [ text rec.movieTitle ]
     in
-        Card.config [ Card.outlineLight ]
-            |> Card.block []
-                [ Block.custom <|
-                    Grid.row []
-                    [ Grid.col [ Col.xs6, Col.sm5, Col.md3 ] [ imgArea ]
-                    , Grid.col [] [ titleArea, mkCategoryLinks rec ]
-                    ]
-                ]
-            |> Card.view
+        Grid.row
+            [ Row.attrs [ Border.all] ]
+            [ Grid.col [ Col.xs6, Col.sm5, Col.md3 ] [ imgArea ]
+            , Grid.col [] [ titleArea, mkCategoryLinks rec ]
+            ]
 
 
 mkCategoryLinks : MovieRecord -> Html Msg
 mkCategoryLinks rec =
-    div [ Spacing.mt3 ] <|
-    List.map
-        (\c ->
-            Button.linkButton
-                [ Button.outlineDark
-                , Button.small
-                , Button.attrs [ Spacing.ml1, mkPageLink c 1 ]
-                ]
-                [ text <| fromCategory c ]
-        )
-        rec.categories
+    let
+        mkLinks c = a [ mkPageLink c 1, Spacing.ml1 ] [ text <| fromCategory c ]
+    in
+        div [ Spacing.mt3 ] <| List.map mkLinks rec.categories
 
 
 fromCategory : Category -> String
@@ -368,9 +391,10 @@ displayMovie movieId =
     case getRecord movieId of
         Nothing ->
             let
-                errMsg = "We should get model.movie from database where id = "
-                         ++ String.fromInt movieId
-                         ++ " ..."
+                errMsg =
+                    "We should get model.movie from database where id = "
+                    ++ String.fromInt movieId
+                    ++ " ..."
             in
             [ h4 [] [ text errMsg ] ]
 
@@ -386,7 +410,8 @@ mkPagination category curPage unit numAll =
     let
         seed = mkPageNumSeed curPage <| numOfPages unit numAll
     in
-        ul [ class "pagination" ] <| List.map (mkPagerItem category curPage) seed
+        ul [ class "pagination", Spacing.mt2, Spacing.mlAuto ]
+        <| List.map (mkPagerItem category curPage) seed
 
 
 mkPageNumSeed : Int -> Int -> List (Int, String)
@@ -413,7 +438,7 @@ numOfPages unit numAll =
 
 
 mkPagerItem : Category -> Int -> (Int, String) -> Html Msg
-mkPagerItem category curPage (n, str) =
+mkPagerItem category curPage (pageNum, str) =
     let
         classOfLi =
             if Just curPage == String.toInt str
@@ -421,14 +446,14 @@ mkPagerItem category curPage (n, str) =
             else [ class "page-item" ]
     in
         li classOfLi
-            [ a [ class "page-link", mkPageLink category n ] [ text str ] ]
+            [ a [ class "page-link", mkPageLink category pageNum ] [ text str ] ]
 
 
 mkPageLink : Category -> Int -> Attribute Msg
-mkPageLink c n =
+mkPageLink category pageNum =
     Builder.relative
         []
-        [ Builder.int categoryQ c , Builder.int pageNumQ n ]
+        [ Builder.int categoryQ category , Builder.int pageNumQ pageNum ]
     |> href
 
 
@@ -440,7 +465,7 @@ getRecord movieId = Nothing
 
 
 getRecords : Category -> Int -> Int -> (List MovieRecord, Int)
-getRecords category n unit =
+getRecords category pageNum unit =
     List.range 1 unit
     |> List.map
         (\i -> { movieTitle = "めっちゃあれなんだがwww"
