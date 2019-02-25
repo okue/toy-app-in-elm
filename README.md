@@ -1,4 +1,4 @@
-# Nameless web app
+# SamiDare
 
 ## Build & Run
 
