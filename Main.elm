@@ -220,10 +220,11 @@ menu model =
         |> Navbar.info
         |> Navbar.brand [ href <| model.root.path ] [ text "SamiDare" ]
         |> Navbar.items
-            [ Navbar.itemLink [ href "http://elm-bootstrap.info/alert" ] [ text "Bootstrap ex" ]
+            [ Navbar.itemLink [ href "http://elm-bootstrap.info/alert" ] [ text "Elm-Bootstrap ex" ]
             , Navbar.itemLink [ href "https://package.elm-lang.org/packages/rundis/elm-bootstrap/5.1.0" ]
-                              [ text "Bootstrap doc" ]
+                              [ text "Elm-Bootstrap doc" ]
             , Navbar.itemLink [ href "https://guide.elm-lang.jp" ] [ text "Elm intro" ]
+            , Navbar.itemLink [ href "https://getbootstrap.com/docs/4.0/components/alerts" ] [ text "Bootstrap doc" ]
             ]
         |> Navbar.view model.navState
 
