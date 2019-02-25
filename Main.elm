@@ -114,18 +114,18 @@ init flags url key =
         ( model, Cmd.batch [ urlCmd, navCmd ] )
 
 
---- XXX: We should remove CDN.stylesheet when building for production
+--- XXX: We should remove loadCSS when building for production
 view : Model -> Browser.Document Msg
 view model =
     { title = "SamiDare"
     , body =
-        [ div []
-            [ CDN.stylesheet
-            , menu model
+        [ div [ class "content" ]
+            <| loadCSS ++
+            [ menu model
             , mainContent model
-            , footContent model
             , modal model
             ]
+        , footContent model
         ]
     }
 
@@ -252,7 +252,7 @@ mainContent model =
 footContent : Model -> Html Msg
 footContent model =
     footer
-        [ class "font-small" ]
+        [ class "footer font-small" ]
         [ Grid.row []
             [ Grid.col []
                 [ a [ href <| model.root.path ++ "#faq" ] [ text "このページについて" ] ]
@@ -489,3 +489,12 @@ modal model =
         |> Modal.body []
             [ h2 [] [ text "ad ad" ] ]
         |> Modal.view model.modalVisibility
+
+
+--
+-- Load CSS for booting with elm-reactor
+--
+loadCSS =
+    [ CDN.stylesheet
+    , node "link" [ rel "stylesheet", href "assets/style.css" ] []
+    ] 
