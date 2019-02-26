@@ -240,7 +240,7 @@ mainContent model =
                 pageMovie movieId model
 
             FAQ ->
-                List.singleton <| text "F and Q"
+                List.singleton <| text "FAQ"
 
             Inquiry ->
                 List.singleton <| text "お問い合わせ"
