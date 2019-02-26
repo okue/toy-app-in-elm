@@ -5,12 +5,12 @@
 start(_Type, _Args) ->
     Dispatch = cowboy_router:compile([
         {'_',
-            [ {"/echo", samidare_api, [echo]}
-            , {"/db", samidare_api, [db]}
-            , {"/", cowboy_static, {file, ?ROOT ++ "index.html"}}
-            , {"/index.html", cowboy_static, {file, ?ROOT ++ "index.html"}}
-            , {"/assets/[...]", cowboy_static, {dir, ?ROOT ++ "assets"}}
-            , {"/output/[...]", cowboy_static, {dir, ?ROOT ++ "output"}}
+            [ {"/echo",         samidare_api,  [echo]}
+            , {"/db",           samidare_api,  [db]}
+            , {"/",             cowboy_static, {file, ?ROOT ++ "/index.html"}}
+            , {"/index.html",   cowboy_static, {file, ?ROOT ++ "/index.html"}}
+            , {"/assets/[...]", cowboy_static, {dir, ?ROOT ++ "/assets"}}
+            , {"/output/[...]", cowboy_static, {dir, ?ROOT ++ "/output"}}
             , {'_', samidare_api, [other]}
             ]
         }
