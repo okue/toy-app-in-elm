@@ -12,6 +12,7 @@ import Url.Parser as UrlParser exposing ((<?>), (</>), Parser, s, top, int)
 import Url.Builder as Builder
 import Url.Parser.Query as Query
 
+import Bootstrap.Navbar as Navbar
 import Bootstrap.Table as Table
 import Bootstrap.Alert as Alert
 import Bootstrap.Grid as Grid
@@ -44,6 +45,7 @@ type alias Model =
     , root : Url
     , modalVisibility : Modal.Visibility
     , navKey : Navigation.Key
+    , navState : Navbar.State
     }
 
 
@@ -69,6 +71,7 @@ type Msg
     | ClickedMovie MovieRecord
     | CloseModal
     | ShowModal
+    | NavMsg Navbar.State
 
 
 type alias MovieRecord =
@@ -103,16 +106,19 @@ main =
 init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
+        ( navState, navCmd ) = Navbar.initialState NavMsg
+
         ( model, urlCmd ) =
             urlUpdate url { page = Search Nothing Nothing
                           , pageUnit = 15
                           , movie = Nothing
                           , root = url
                           , navKey = key
+                          , navState = navState
                           , modalVisibility= Modal.hidden
                           }
     in
-        ( model, Cmd.batch [ urlCmd ] )
+        ( model, Cmd.batch [ urlCmd, navCmd ] )
 
 
 --- XXX: We should remove loadCSS when building for production
@@ -169,6 +175,11 @@ update msg model =
             , Cmd.none
             )
 
+        NavMsg state ->
+            ( { model | navState = state }
+            , Cmd.none
+            )
+
 
 urlUpdate : Url -> Model -> ( Model, Cmd Msg )
 urlUpdate url model =
@@ -203,7 +214,7 @@ routeParser =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Navbar.subscriptions model.navState NavMsg
 
 
 -------------------------------------------------------------------------------
@@ -220,8 +231,10 @@ menu model =
                 [ align "center"
                 , Spacing.mt3
                 , Spacing.mb3
+                , class "border-bottom"
                 ]
-                [ text "五月雨" ] ]
+                [ text "五月雨" ]
+            ]
         , Grid.containerFluid []
             [ Grid.row
                 [ Row.attrs
@@ -312,6 +325,19 @@ footContent model =
         ]
 
 
+-- footManu model =
+--     Navbar.config NavMsg
+--         |> Navbar.withAnimation
+--         |> Navbar.brand [ href "#" ] [ text "Brand" ]
+--         |> Navbar.brand [ href "#" ] [ text "nd" ]
+--         |> Navbar.items
+--             [ Navbar.itemLink [ href "#" ] [ text "Item 1" ]
+--             , Navbar.itemLink [ href "#" ] [ text "Item 2" ]
+--             ]
+--         |> Navbar.fixBottom
+--         |> Navbar.view model.navState
+
+
 --
 -- Page views
 --
@@ -341,10 +367,14 @@ pageSearch model =
             let
                 (xs, numAllRecords) = getRecords c n model.pageUnit
             in
-                [ div
-                    [ Spacing.mb1 ]
-                    [ p [ Spacing.mb0 ] [ text "あああああああああああああああ" ]
-                    , p [ Spacing.mb1 ] [ text "あああああああああああああああ" ]
+                [ Grid.row
+                    [ Row.attrs
+                        [ Spacing.mb1 ]
+                    ]
+                    [ Grid.col []
+                        [ p [ Spacing.mb0 ] [ text "あああああああああああああああ" ]
+                        , p [ Spacing.mb1 ] [ text "あああああああああああああああ" ]
+                        ]
                     ]
                 ]
                 ++ genSearchItems model xs
@@ -387,11 +417,8 @@ genExtraItems : Model -> List (Html Msg)
 genExtraItems model =
     let
         h = mkListHeader "おすすめ"
-        l =
-            [ p [ align "center" ] [ text "aaaaaaa" ]
-            , p [ align "center" ] [ text "aaaaaaa" ]
-            , p [ align "center" ] [ text "aaaaaaa" ]
-            , p [ align "center" ] [ text "aaaaaaa" ]
+
+        l = [ p [ align "center" ] [ text "aaaaaaa" ]
             , p [ align "center" ] [ text "aaaaaaa" ]
             ]
     in
@@ -401,7 +428,9 @@ genExtraItems model =
 genSearchItems : Model -> List MovieRecord -> List (Html Msg)
 genSearchItems model records =
     let
-        h = mkListHeader <| "最新の" ++ String.fromInt model.pageUnit ++ "件"
+        n = "最新の" ++ String.fromInt model.pageUnit ++ "件"
+
+        h = mkListHeader n
 
         l = List.map (genSearchItem model) records
     in
@@ -435,11 +464,23 @@ genSearchItem model rec =
 
 mkListHeader : String -> Html Msg
 mkListHeader name =
-    h4
-        [ class "tableHeader"
-        , Spacing.mb1
-        ]
-        [ text name ]
+    let
+        h =
+            h4
+                [ class "tableHeader"
+                , Spacing.mb1
+                , Spacing.ml0
+                , Spacing.mr0
+                ]
+                [ text name ]
+
+    in
+        Grid.row
+            [ Row.centerXs ]
+            [ Grid.col
+                [ Col.attrs [ Spacing.p0 ] ]
+                [ h ]
+            ]
 
 
 mkGridButton : Model -> String -> String -> Grid.Column Msg
@@ -461,7 +502,9 @@ mkGridButton model name path =
 mkCategoryLinks : MovieRecord -> Html Msg
 mkCategoryLinks rec =
     let
-        mkLinks c = a [ mkPageLink c 1, Spacing.ml1 ] [ text <| fromCategory c ]
+        mkLinks c =
+            a   [ mkPageLink c 1, Spacing.ml1, style "font-size" "x-small" ]
+                [ text <| fromCategory c ]
     in
         div [ Spacing.mt3 ] <| List.map mkLinks rec.categories
 
@@ -469,10 +512,10 @@ mkCategoryLinks rec =
 fromCategory : Category -> String
 fromCategory x =
     case x of
-        1 -> "one"
-        2 -> "two"
-        3 -> "three"
-        _ -> "other"
+        1 -> "すごい"
+        2 -> "やばい"
+        3 -> "え？？"
+        _ -> "謎"
 
 
 toSearchState : Page -> (Category, Int)
@@ -610,6 +653,7 @@ modal model =
 --
 -- Load CSS for booting with elm-reactor
 --
+loadCSS : List (Html Msg)
 loadCSS =
     [ CDN.stylesheet
     , node "link" [ rel "stylesheet", href "assets/style.css" ] []
