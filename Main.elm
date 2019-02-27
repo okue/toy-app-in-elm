@@ -12,8 +12,8 @@ import Url.Parser as UrlParser exposing ((<?>), (</>), Parser, s, top, int)
 import Url.Builder as Builder
 import Url.Parser.Query as Query
 
-import Bootstrap.Navbar as Navbar
 import Bootstrap.Table as Table
+import Bootstrap.Alert as Alert
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
@@ -38,13 +38,12 @@ import Bootstrap.Utilities.Flex as Flex
 -- Elements searchCategory and searchNumber are ranged over integers
 --
 type alias Model =
-    { navKey : Navigation.Key
-    , page : Page
+    { page : Page
     , pageUnit : Int
     , movie : Maybe MovieRecord
-    , navState : Navbar.State
     , root : Url
     , modalVisibility : Modal.Visibility
+    , navKey : Navigation.Key
     }
 
 
@@ -68,7 +67,6 @@ type Msg
     = UrlChange Url
     | ClickedLink UrlRequest
     | ClickedMovie MovieRecord
-    | NavMsg Navbar.State
     | CloseModal
     | ShowModal
 
@@ -105,19 +103,16 @@ main =
 init : Flags -> Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
-        ( navState, navCmd ) = Navbar.initialState NavMsg
-
         ( model, urlCmd ) =
-            urlUpdate url { navKey = key
-                          , navState = navState
-                          , page = Search Nothing Nothing
+            urlUpdate url { page = Search Nothing Nothing
                           , pageUnit = 15
                           , movie = Nothing
                           , root = url
+                          , navKey = key
                           , modalVisibility= Modal.hidden
                           }
     in
-        ( model, Cmd.batch [ urlCmd, navCmd ] )
+        ( model, Cmd.batch [ urlCmd ] )
 
 
 --- XXX: We should remove loadCSS when building for production
@@ -164,11 +159,6 @@ update msg model =
                 , Navigation.pushUrl model.navKey ref
                 )
 
-        NavMsg state ->
-            ( { model | navState = state }
-            , Cmd.none
-            )
-
         CloseModal ->
             ( { model | modalVisibility = Modal.hidden }
             , Cmd.none
@@ -213,7 +203,7 @@ routeParser =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Navbar.subscriptions model.navState NavMsg
+    Sub.none
 
 
 -------------------------------------------------------------------------------
@@ -224,13 +214,15 @@ subscriptions model =
 menu : Model -> Html Msg
 menu model =
     header []
-        [ Navbar.config NavMsg
-            |> Navbar.info
-            |> Navbar.brand
-                [ href <| model.root.path ]
-                [ h3 [] [ text "五月雨" ] ]
-            |> Navbar.view model.navState
-        , Grid.container []
+        [ a
+            [ href <| model.root.path ]
+            [ h3
+                [ align "center"
+                , Spacing.mt3
+                , Spacing.mb3
+                ]
+                [ text "五月雨" ] ]
+        , Grid.containerFluid []
             [ Grid.row
                 [ Row.attrs
                     [ Spacing.mt1
@@ -248,7 +240,7 @@ menu model =
 
 mainContent : Model -> Html Msg
 mainContent model =
-    Grid.container [] <|
+    Grid.containerFluid [] <|
         case model.page of
             New ->
                 pageSearch { model | page = Search (Just 1) (Just 1) }
@@ -357,6 +349,7 @@ pageSearch model =
                 ]
                 ++ genSearchItems model xs
                 ++ [ mkPagination c n model.pageUnit numAllRecords ]
+                ++ genExtraItems model
 
 
 pageMovie : Int -> Model -> List (Html Msg)
@@ -390,9 +383,29 @@ pageMovie movieId model =
                 displayMovie movieId
 
 
+genExtraItems : Model -> List (Html Msg)
+genExtraItems model =
+    let
+        h = mkListHeader "おすすめ"
+        l =
+            [ p [ align "center" ] [ text "aaaaaaa" ]
+            , p [ align "center" ] [ text "aaaaaaa" ]
+            , p [ align "center" ] [ text "aaaaaaa" ]
+            , p [ align "center" ] [ text "aaaaaaa" ]
+            , p [ align "center" ] [ text "aaaaaaa" ]
+            ]
+    in
+        h :: l
+
+
 genSearchItems : Model -> List MovieRecord -> List (Html Msg)
 genSearchItems model records =
-    List.map (genSearchItem model) records
+    let
+        h = mkListHeader <| "最新の" ++ String.fromInt model.pageUnit ++ "件"
+
+        l = List.map (genSearchItem model) records
+    in
+        h :: l
 
 
 genSearchItem : Model -> MovieRecord -> Html Msg
@@ -410,10 +423,23 @@ genSearchItem model rec =
             div [ onClick <| ClickedMovie rec ] [ text rec.movieTitle ]
     in
         Grid.row
-            [ Row.attrs [ Border.all] ]
+            [ Row.attrs
+                [ Border.all
+                , Spacing.mb1
+                ]
+            ]
             [ Grid.col [ Col.xs6, Col.sm5, Col.md3 ] [ imgArea ]
             , Grid.col [] [ titleArea, mkCategoryLinks rec ]
             ]
+
+
+mkListHeader : String -> Html Msg
+mkListHeader name =
+    h4
+        [ class "tableHeader"
+        , Spacing.mb1
+        ]
+        [ text name ]
 
 
 mkGridButton : Model -> String -> String -> Grid.Column Msg
