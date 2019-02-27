@@ -52,7 +52,11 @@ type alias Category = Int
 
 
 type Page
-    = Search (Maybe Category) (Maybe Int)
+    = New
+    | Ranking
+    | Genre
+    | Who
+    | Search (Maybe Category) (Maybe Int)
     | Movie (Maybe Int)
     | Policy
     | Inquiry
@@ -195,7 +199,11 @@ routeParser : Parser (Page -> a) a
 routeParser =
     -- XXX:
     UrlParser.oneOf
-        [ UrlParser.map Inquiry (top </> s "inquiry")
+        [ UrlParser.map New (s "new")
+        , UrlParser.map Ranking (s "ranking")
+        , UrlParser.map Genre (s "genre")
+        , UrlParser.map Who (s "who")
+        , UrlParser.map Inquiry (top </> s "inquiry")
         , UrlParser.map FAQ (top </> s "faq")
         , UrlParser.map Policy (top </> s "policy")
         , UrlParser.map Search (top <?> Query.int categoryQ <?> Query.int pageNumQ)
@@ -215,24 +223,45 @@ subscriptions model =
 
 menu : Model -> Html Msg
 menu model =
-    Navbar.config NavMsg
-        |> Navbar.withAnimation
-        |> Navbar.info
-        |> Navbar.brand [ href <| model.root.path ] [ text "SamiDare" ]
-        |> Navbar.items
-            [ Navbar.itemLink [ href "http://elm-bootstrap.info/alert" ] [ text "Elm-Bootstrap ex" ]
-            , Navbar.itemLink [ href "https://package.elm-lang.org/packages/rundis/elm-bootstrap/5.1.0" ]
-                              [ text "Elm-Bootstrap doc" ]
-            , Navbar.itemLink [ href "https://guide.elm-lang.jp" ] [ text "Elm intro" ]
-            , Navbar.itemLink [ href "https://getbootstrap.com/docs/4.0/components/alerts" ] [ text "Bootstrap doc" ]
+    header []
+        [ Navbar.config NavMsg
+            |> Navbar.info
+            |> Navbar.brand
+                [ href <| model.root.path ]
+                [ h3 [] [ text "五月雨" ] ]
+            |> Navbar.view model.navState
+        , Grid.container []
+            [ Grid.row
+                [ Row.attrs
+                    [ Spacing.mt1
+                    , align "center"
+                    ]
+                ]
+                [ mkGridButton model "新着"       "#new"
+                , mkGridButton model "ランキング" "#ranking"
+                , mkGridButton model "ジャンル別" "#genre"
+                , mkGridButton model "XX別"       "#who"
+                ]
             ]
-        |> Navbar.view model.navState
+        ]
 
 
 mainContent : Model -> Html Msg
 mainContent model =
     Grid.container [] <|
         case model.page of
+            New ->
+                pageSearch { model | page = Search (Just 1) (Just 1) }
+
+            Ranking ->
+                pageRanking
+
+            Genre ->
+                pageGenre
+
+            Who ->
+                pageWho
+
             Search _ _ ->
                 pageSearch model
 
@@ -301,6 +330,18 @@ pageNotFound =
     ]
 
 
+pageRanking =
+    List.singleton <| h3 [] [ text "ranking" ]
+
+
+pageGenre =
+    List.singleton <| h3 [] [ text "genre" ]
+
+
+pageWho =
+    List.singleton <| h3 [] [ text "who" ]
+
+
 pageSearch : Model -> List (Html Msg)
 pageSearch model =
     case toSearchState model.page of
@@ -308,7 +349,12 @@ pageSearch model =
             let
                 (xs, numAllRecords) = getRecords c n model.pageUnit
             in
-                [ h3 [] [ text "Top page of SamiDare" ] ]
+                [ div
+                    [ Spacing.mb1 ]
+                    [ p [ Spacing.mb0 ] [ text "あああああああああああああああ" ]
+                    , p [ Spacing.mb1 ] [ text "あああああああああああああああ" ]
+                    ]
+                ]
                 ++ genSearchItems model xs
                 ++ [ mkPagination c n model.pageUnit numAllRecords ]
 
@@ -370,6 +416,22 @@ genSearchItem model rec =
             ]
 
 
+mkGridButton : Model -> String -> String -> Grid.Column Msg
+mkGridButton model name path =
+    Grid.col
+        [ Col.xs6
+        , Col.sm3
+        , Col.attrs [ Spacing.mb1 ]
+        ]
+        [ Button.linkButton
+            [ Button.attrs [ href <| model.root.path ++ path ]
+            , Button.outlineDark
+            , Button.block
+            ]
+            [ text name ]
+        ]
+
+
 mkCategoryLinks : MovieRecord -> Html Msg
 mkCategoryLinks rec =
     let
@@ -401,8 +463,8 @@ mkMoviePageRef model movieId =
     model.root.path ++ "?id=" ++ String.fromInt movieId ++ "#movie"
 
 
-categoryQ = "c"
-pageNumQ = "n"
+categoryQ = "category"
+pageNumQ = "page"
 
 
 mkKeyValueText : String -> String -> Html Msg
