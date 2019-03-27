@@ -56,7 +56,7 @@ type Page
     = New
     | Ranking
     | Genre
-    | Who
+    | XX
     | Search (Maybe Category) (Maybe Int)
     | Movie (Maybe Int)
     | Policy
@@ -203,7 +203,7 @@ routeParser =
         [ UrlParser.map New (s "new")
         , UrlParser.map Ranking (s "ranking")
         , UrlParser.map Genre (s "genre")
-        , UrlParser.map Who (s "who")
+        , UrlParser.map XX (s "xx")
         , UrlParser.map Inquiry (top </> s "inquiry")
         , UrlParser.map FAQ (top </> s "faq")
         , UrlParser.map Policy (top </> s "policy")
@@ -245,7 +245,7 @@ menu model =
                 [ mkGridButton model "新着"       "#new"
                 , mkGridButton model "ランキング" "#ranking"
                 , mkGridButton model "ジャンル別" "#genre"
-                , mkGridButton model "XX別"       "#who"
+                , mkGridButton model "XX別"       "#xx"
                 ]
             ]
         ]
@@ -264,8 +264,8 @@ mainContent model =
             Genre ->
                 pageGenre
 
-            Who ->
-                pageWho
+            XX ->
+                pageXX
 
             Search _ _ ->
                 pageSearch model
@@ -356,8 +356,8 @@ pageGenre =
     List.singleton <| h3 [] [ text "genre" ]
 
 
-pageWho =
-    List.singleton <| h3 [] [ text "who" ]
+pageXX =
+    List.singleton <| h3 [] [ text "xx" ]
 
 
 pageSearch : Model -> List (Html Msg)
