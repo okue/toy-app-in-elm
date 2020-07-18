@@ -1,4 +1,4 @@
-# SamiDare
+# toy-app-in-elm
 
 
 ## Build & Run
